@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+// The backend URL is now pulled from an environment variable.
+// On Render, you will set this to your backend service's URL.
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+
 // --- API Abstraction ---
-// It's better to keep API calls separate from your components.
+// It's a good practice to keep API calls separate from your components.
 const loginUser = async (credentials) => {
-  const response = await fetch("http://localhost:5000/api/login", {
+  // Use the environment variable to construct the full URL
+  const response = await fetch(`${BACKEND_URL}/api/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
@@ -17,12 +22,12 @@ const loginUser = async (credentials) => {
     throw new Error(data.error || "An unknown error occurred.");
   }
 
-  // The login endpoint only returns a token, so we just return that.
+  // The login endpoint only returns a token.
   return data;
 };
 
 // --- Component ---
-function Login({ onAuthChange }) {
+function App({ onAuthChange }) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,113 +64,72 @@ function Login({ onAuthChange }) {
   };
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div style={styles.inputGroup}>
-          <label htmlFor="email" style={styles.label}>Email Address</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            autoComplete="username"
-            style={styles.input}
-          />
-        </div>
-        <div style={styles.inputGroup}>
-          <label htmlFor="password" style={styles.label}>Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            autoComplete="current-password"
-            style={styles.input}
-          />
-        </div>
-        <button type="submit" disabled={loading} style={styles.button(loading)}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4 font-sans">
+      <div className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow-xl">
+        <h2 className="mb-6 text-center text-3xl font-bold text-gray-800">
+          Login
+        </h2>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="sr-only">
+              Email Address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              autoComplete="username"
+              className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              autoComplete="current-password"
+              className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full rounded-md px-4 py-2 text-lg font-semibold text-white transition-colors duration-300 ${
+              loading
+                ? "cursor-not-allowed bg-gray-400"
+                : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            }`}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
 
-      {error && <p style={styles.errorText}>{error}</p>}
+        {error && (
+          <p className="mt-4 text-center text-sm font-semibold text-red-600">
+            {error}
+          </p>
+        )}
 
-      <p style={styles.footerText}>
-        Don’t have an account?{" "}
-        <Link to="/signup" style={styles.link}>
-          Sign up here
-        </Link>
-      </p>
+        <p className="mt-6 text-center text-gray-600">
+          Don’t have an account?{" "}
+          <Link to="/signup" className="text-blue-600 hover:underline">
+            Sign up here
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
 
-// --- Styles ---
-// Centralizing styles makes the JSX cleaner and easier to manage.
-const styles = {
-  container: {
-    maxWidth: 400,
-    margin: "50px auto",
-    padding: 20,
-    border: "1px solid #ddd",
-    borderRadius: 8,
-    background: "#fff",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  label: { // Added for accessibility
-    position: 'absolute',
-    width: 1,
-    height: 1,
-    padding: 0,
-    margin: -1,
-    overflow: 'hidden',
-    clip: 'rect(0, 0, 0, 0)',
-    whiteSpace: 'nowrap',
-    borderWidth: 0,
-  },
-  input: {
-    width: "100%",
-    padding: 10,
-    boxSizing: 'border-box'
-  },
-  button: (loading) => ({
-    width: "100%",
-    padding: 12,
-    backgroundColor: loading ? "#6c757d" : "#007bff",
-    color: "white",
-    fontSize: 16,
-    border: "none",
-    borderRadius: 4,
-    cursor: loading ? "not-allowed" : "pointer",
-  }),
-  errorText: {
-    color: "red",
-    marginTop: 10,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  footerText: {
-    marginTop: 15,
-    textAlign: "center",
-  },
-  link: {
-    color: "#007bff",
-    textDecoration: "none",
-  },
-};
-
-export default Login;
+export default App;
